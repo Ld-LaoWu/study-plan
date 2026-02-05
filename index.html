@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#6366f1">
+    <title>📚 考公学习计划</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #6366f1; --primary-dark: #4f46e5; --success: #22c55e; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --orange: #f59e0b; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 70px; }
+        
+        /* Header */
+        .header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 18px 16px; position: sticky; top: 0; z-index: 100; }
+        .header h1 { font-size: 20px; font-weight: 700; }
+        .header p { font-size: 12px; opacity: 0.9; margin-top: 3px; }
+        
+        /* Progress Card */
+        .progress-card { background: var(--card); margin: -12px 12px 12px; padding: 16px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .progress-title { font-weight: 600; font-size: 14px; }
+        .progress-percent { font-size: 24px; font-weight: 700; color: var(--primary); }
+        .progress-bar { height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; margin-bottom: 12px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); border-radius: 5px; transition: width 0.3s; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .stat-item { text-align: center; padding: 8px 4px; background: var(--bg); border-radius: 8px; }
+        .stat-value { font-size: 18px; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 10px; color: var(--text-light); margin-top: 2px; }
+        
+        /* Section */
+        .section { padding: 0 12px; margin-bottom: 16px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .section-title { font-size: 16px; font-weight: 600; }
+        .section-action { font-size: 13px; color: var(--primary); background: none; border: none; cursor: pointer; }
+        
+        /* Card */
+        .card { background: var(--card); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .card-badge { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; background: #fef3c7; color: var(--orange); }
+        .card-badge.today { background: #dbeafe; color: #1d4ed8; }
+        .card-title { font-weight: 600; font-size: 14px; }
+        .card-date { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .check-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all 0.2s; }
+        .check-btn.checked { background: var(--success); border-color: var(--success); color: white; }
+        
+        /* Tasks */
+        .tasks { display: flex; flex-direction: column; gap: 6px; }
+        .task { display: flex; align-items: center; gap: 10px; padding: 10px 10px; background: var(--bg); border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .task.completed { opacity: 0.5; }
+        .task.completed .task-text { text-decoration: line-through; }
+        .task-chk { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--border); background: white; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all 0.2s; flex-shrink: 0; }
+        .task-chk.checked { background: var(--success); border-color: var(--success); color: white; }
+        .task-text { flex: 1; font-size: 13px; }
+        .task-time { font-size: 10px; color: var(--text-light); }
+        
+        /* Modules */
+        .modules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .module { background: var(--card); border-radius: 10px; padding: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .module-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .module-name { font-weight: 600; font-size: 12px; }
+        .module-target { font-size: 10px; color: var(--success); }
+        .module-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+        .module-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .fill-blue { background: #3b82f6; } .fill-green { background: #22c55e; } .fill-yellow { background: #eab308; } .fill-purple { background: #a855f7; } .fill-red { background: #ef4444; }
+        
+        /* Nav */
+        .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 0; padding-bottom: max(8px, env(safe-area-inset-bottom)); z-index: 100; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 14px; background: none; border: none; cursor: pointer; color: var(--text-light); transition: color 0.2s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 20px; }
+        .nav-label { font-size: 10px; }
+        
+        /* Views */
+        .view { display: none; }
+        .view.active { display: block; }
+        
+        /* Timer */
+        .timer-card { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 14px; padding: 18px; color: white; text-align: center; margin-bottom: 12px; }
+        .timer-modes { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
+        .timer-mode { padding: 7px 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3); background: transparent; color: white; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+        .timer-mode.active { background: rgba(255,255,255,0.2); border-color: white; }
+        .timer-display { font-size: 42px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 10px 0; }
+        .timer-btns { display: flex; gap: 10px; justify-content: center; }
+        .timer-btn { padding: 10px 18px; border-radius: 20px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+        .timer-btn:active { transform: scale(0.95); }
+        .timer-btn.start { background: white; color: var(--primary); }
+        .timer-btn.pause { background: rgba(255,255,255,0.2); color: white; }
+        
+        /* Family Card */
+        .family-card { background: linear-gradient(135deg, var(--orange), #d97706); border-radius: 14px; padding: 16px; color: white; margin-bottom: 12px; }
+        .family-title { font-size: 16px; font-weight: 600; margin-bottom: 5px; }
+        .family-info { font-size: 12px; opacity: 0.9; margin-bottom: 8px; }
+        .family-status { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.5} }
+        
+        /* Quote */
+        .quote-card { background: var(--card); border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 12px; }
+        .quote-text { font-size: 14px; color: var(--text); line-height: 1.5; margin-bottom: 5px; }
+        .quote-author { font-size: 11px; color: var(--text-light); }
+        
+        /* Tip */
+        .tip-card { background: var(--card); border-radius: 12px; padding: 12px; margin-bottom: 8px; }
+        .tip-header { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-weight: 600; font-size: 13px; }
+        .tip-content { font-size: 11px; color: var(--text-light); line-height: 1.5; }
+        
+        /* Notification */
+        .noti { position: fixed; top: 70px; left: 12px; right: 12px; background: var(--card); border-radius: 10px; padding: 10px 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; transform: translateY(-100px); opacity: 0; transition: all 0.3s; z-index: 200; }
+        .noti.show { transform: translateY(0); opacity: 1; }
+        .noti-icon { font-size: 20px; }
+        .noti-text { flex: 1; font-size: 12px; }
+        .noti-close { background: none; border: none; font-size: 15px; color: var(--text-light); cursor: pointer; }
+        
+        /* Toast */
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 300; opacity: 0; transition: opacity 0.3s; }
+        .toast.show { opacity: 1; }
+        
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 500; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--card); border-radius: 16px; padding: 20px; width: 90%; max-width: 350px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); }
+        .alarm-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg); border-radius: 10px; margin-bottom: 8px; }
+        .alarm-time { font-size: 18px; font-weight: 600; color: var(--primary); }
+        .alarm-label { flex: 1; font-size: 14px; }
+        .alarm-switch { width: 44px; height: 24px; background: var(--border); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s; }
+        .alarm-switch.on { background: var(--success); }
+        .alarm-switch::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.3s; }
+        .alarm-switch.on::after { transform: translateX(20px); }
+        .alarm-add { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+        .alarm-add:active { opacity: 0.8; }
+        
+        /* Sound Select */
+        .sound-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+        .sound-item { padding: 12px; background: var(--bg); border-radius: 10px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .sound-item.selected { border-color: var(--primary); background: var(--primary); color: white; }
+        .sound-item:active { transform: scale(0.95); }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>📚 考公冲刺计划</h1>
+        <p id="date-display"></p>
+    </div>
+    
+    <!-- Progress -->
+    <div class="progress-card">
+        <div class="progress-header">
+            <span class="progress-title">总体进度</span>
+            <span class="progress-percent" id="progress-pct">0%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="stats">
+            <div class="stat-item"><div class="stat-value" id="days-done">0</div><div class="stat-label">已完成天数</div></div>
+            <div class="stat-item"><div class="stat-value" id="tasks-done">0</div><div class="stat-label">已完成任务</div></div>
+            <div class="stat-item"><div class="stat-value" id="hours-done">0</div><div class="stat-label">学习时长(h)</div></div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="noti" id="noti"><span class="noti-icon">🔔</span><span class="noti-text" id="noti-text"></span><button class="noti-close" onclick="hideNoti()">✕</button></div>
+    
+    <!-- Views -->
+    <div id="views">
+        <!-- Home -->
+        <div class="view active" id="view-home">
+            <div class="section">
+                <div class="section-header"><span class="section-title">📅 今日计划</span><button class="section-action" onclick="switchTab(1)">查看全部</button></div>
+                <div class="card">
+                    <div class="card-header">
+                        <div><span class="card-badge today" id="day-badge">今日</span><div class="card-title" id="day-title">第1天</div><div class="card-date" id="day-date">2月5日 周三</div></div>
+                        <button class="check-btn" id="day-check" onclick="toggleDay()"><span id="day-check-icon"></span></button>
+                    </div>
+                    <div class="tasks" id="today-tasks"></div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-header"><span class="section-title">🎯 模块目标</span></div>
+                <div class="modules" id="modules"></div>
+            </div>
+        </div>
+        
+        <!-- Plan -->
+        <div class="view" id="view-plan">
+            <div class="section">
+                <div class="section-header"><span class="section-title">📆 完整计划</span></div>
+                <div id="all-days"></div>
+            </div>
+        </div>
+        
+        <!-- Timer -->
+        <div class="view" id="view-timer">
+            <div class="section">
+                <div class="timer-card">
+                    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+                        <button onclick="openAlarmModal()" style="background:rgba(255,255,255,0.2);border:none;border-radius:15px;padding:6px 12px;color:white;font-size:12px;cursor:pointer;">⚙️ 提醒设置</button>
+                    </div>
+                    <div class="timer-modes">
+                        <button class="timer-mode active" onclick="setMode(25,this)">25分钟</button>
+                        <button class="timer-mode" onclick="setMode(45,this)">45分钟</button>
+                        <button class="timer-mode" onclick="setMode(5,this)">5分钟休息</button>
+                    </div>
+                    <div class="timer-display" id="timer-display">25:00</div>
+                    <div class="timer-btns">
+                        <button class="timer-btn start" id="timer-btn" onclick="toggleTimer()">开始学习</button>
+                    </div>
+                </div>
+                <div class="family-card">
+                    <div class="family-title">👨‍👩‍👧 家庭时光</div>
+                    <div class="family-info">每天固定时间陪家人，保持生活平衡 ❤️</div>
+                    <div class="family-status"><span class="dot"></span><span id="family-status">今天还有家庭时间哦～</span></div>
+                </div>
+                <div class="quote-card">
+                    <div class="quote-text">"成功不是终点，勇气才是继续前行的真正力量。"</div>
+                    <div class="quote-author">—— 加油，你可以的！</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="view" id="view-stats">
+            <div class="section">
+                <div class="section-title" style="margin-bottom:12px">📊 学习统计</div>
+                <div class="tip-card">
+                    <div class="tip-header">📈 本周趋势</div>
+                    <div class="tip-content" id="week-chart"></div>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-header">💡 提分建议</div>
+                    <div class="tip-content">
+                        <p>📊 资料分析是提分最快的模块，每天至少2套题</p>
+                        <p style="margin-top:4px">🎯 数量关系只做简单题，其他蒙同一选项</p>
+                        <p style="margin-top:4px">💪 每天坚持运动，保持大脑清醒</p>
+                    </div>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-header">🎯 模块提分策略</div>
+                    <div class="tip-content">
+                        <p><b>资料分析(85%)</b>：每天限时2套，20分钟内</p>
+                        <p style="margin-top:4px"><b>判断推理(75%)</b>：图推每天练，保持敏感</p>
+                        <p style="margin-top:4px"><b>言语理解(75%)</b>：逻辑填空积累，抓主旨</p>
+                        <p style="margin-top:4px"><b>数量关系(40%)</b>：只做会做的，省时省力</p>
+                        <p style="margin-top:4px"><b>常识判断(50%)</b>：每天15分钟时政</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+    
+    <!-- Alarm Modal -->
+    <div class="modal" id="alarm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">⏰ 学习提醒设置</span>
+                <button class="modal-close" onclick="closeAlarmModal()">✕</button>
+            </div>
+            <div id="alarm-list"></div>
+            <button class="alarm-add" onclick="addNewAlarm()">+ 添加提醒</button>
+            <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border);">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px;">🔔 提醒铃声</div>
+            <div class="sound-list" id="sound-list">
+                <div class="sound-item selected" onclick="selectSound('beep',this)">🔔 叮咚</div>
+                <div class="sound-item" onclick="selectSound('bell',this)">🔔 铃声</div>
+                <div class="sound-item" onclick="selectSound('chime',this)">🎵 叮当</div>
+                <div class="sound-item" onclick="selectSound('alarm',this)">⏰ 闹钟</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Nav -->
+    <nav class="nav">
+        <button class="nav-item active" onclick="switchTab(0,this)"><span class="nav-icon">🏠</span><span class="nav-label">首页</span></button>
+        <button class="nav-item" onclick="switchTab(1,this)"><span class="nav-icon">📅</span><span class="nav-label">计划</span></button>
+        <button class="nav-item" onclick="switchTab(2,this)"><span class="nav-icon">⏱️</span><span class="nav-label">计时</span></button>
+        <button class="nav-item" onclick="switchTab(3,this)"><span class="nav-icon">📊</span><span class="nav-label">统计</span></button>
+    </nav>
+    
+    <script>
+        // ========== Audio Context ==========
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+        
+        // ========== Sound Generator ==========
+        function playSound(type = 'beep', duration = 0.5) {
+            try {
+                const ctx = getAudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                switch(type) {
+                    case 'beep':
+                        osc.frequency.value = 880;
+                        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+                        osc.start();
+                        osc.stop(ctx.currentTime + duration);
+                        break;
+                        
+                    case 'bell':
+                        osc.type = 'sine';
+                        osc.frequency.value = 523;
+                        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 1.5);
+                        break;
+                        
+                    case 'chime':
+                        // Play a pleasant chime
+                        const playNote = (freq, delay) => {
+                            const o = ctx.createOscillator();
+                            const g = ctx.createGain();
+                            o.connect(g);
+                            g.connect(ctx.destination);
+                            o.frequency.value = freq;
+                            g.gain.setValueAtTime(0.2, ctx.currentTime + delay);
+                            g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.8);
+                            o.start(ctx.currentTime + delay);
+                            o.stop(ctx.currentTime + delay + 0.8);
+                        };
+                        playNote(523, 0);
+                        playNote(659, 0.2);
+                        playNote(784, 0.4);
+                        break;
+                        
+                    case 'alarm':
+                        // Alarm clock style
+                        const playAlarm = () => {
+                            const o = ctx.createOscillator();
+                            const g = ctx.createGain();
+                            o.connect(g);
+                            g.connect(ctx.destination);
+                            o.type = 'square';
+                            o.frequency.value = 1000;
+                            g.gain.setValueAtTime(0.2, ctx.currentTime);
+                            g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                            o.start();
+                            o.stop(ctx.currentTime + 0.15);
+                        };
+                        for(let i=0; i<6; i++) {
+                            setTimeout(playAlarm, i * 300);
+                        }
+                        break;
+                }
+                
+                // Vibration on mobile
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200, 100, 200]);
+                }
+            } catch(e) { console.log('Audio error:', e); }
+        }
+        
+        // ========== Alarm System ==========
+        let alarms = [
+            { time: '08:00', label: '早起学习', enabled: true },
+            { time: '14:00', label: '下午学习', enabled: true },
+            { time: '19:00', label: '晚间学习', enabled: true }
+        ];
+        let currentSound = 'beep';
+        
+        function loadAlarms() {
+            const saved = localStorage.getItem('studyAlarms');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                alarms = parsed.alarms || alarms;
+                currentSound = parsed.sound || 'beep';
+            }
+        }
+        
+        function saveAlarms() {
+            localStorage.setItem('studyAlarms', JSON.stringify({ alarms, sound: currentSound }));
+        }
+        
+        function renderAlarms() {
+            const list = document.getElementById('alarm-list');
+            list.innerHTML = '';
+            alarms.forEach((alarm, i) => {
+                list.innerHTML += `
+                    <div class="alarm-item">
+                        <span class="alarm-time">${alarm.time}</span>
+                        <span class="alarm-label">${alarm.label}</span>
+                        <div class="alarm-switch ${alarm.enabled ? 'on' : ''}" onclick="toggleAlarm(${i})"></div>
+                    </div>
+                `;
+            });
+        }
+        
+        function toggleAlarm(i) {
+            alarms[i].enabled = !alarms[i].enabled;
+            saveAlarms();
+            renderAlarms();
+            showToast(alarms[i].enabled ? '提醒已开启' : '提醒已关闭');
+        }
+        
+        function addNewAlarm() {
+            const time = prompt('请输入提醒时间 (如: 09:30):');
+            if (!time) return;
+            if (!/^\d{2}:\d{2}$/.test(time)) {
+                showToast('格式错误，请使用 HH:MM 格式');
+                return;
+            }
+            alarms.push({ time, label: '学习提醒', enabled: true });
+            saveAlarms();
+            renderAlarms();
+            showToast(`已添加 ${time} 的提醒`);
+        }
+        
+        function selectSound(type, btn) {
+            currentSound = type;
+            document.querySelectorAll('.sound-item').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            saveAlarms();
+            playSound(type);
+            showToast('已切换铃声');
+        }
+        
+        function openAlarmModal() {
+            document.getElementById('alarm-modal').classList.add('show');
+            renderAlarms();
+        }
+        
+        function closeAlarmModal() {
+            document.getElementById('alarm-modal').classList.remove('show');
+        }
+        
+        function checkAlarms() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const time = `${h}:${m}`;
+            
+            alarms.forEach(alarm => {
+                if (alarm.enabled && alarm.time === time) {
+                    showNoti(`⏰ ${alarm.label}时间到！`);
+                    playSound(currentSound);
+                }
+            });
+        }
+        
+        // ========== Data ==========
+        const plan = {
+            days: [
+                {day:1,date:"2月5日 周三",title:"资料分析+判断推理基础",tasks:[{t:"资料分析公式速记",tm:"20min"},{t:"资料分析套题2套",tm:"40min"},{t:"判断推理-图形推理",tm:"30min"},{t:"判断推理-逻辑判断",tm:"30min"},{t:"午休+散步",tm:"90min"},{t:"薄弱模块专项突破",tm:"60min"}],done:false},
+                {day:2,date:"2月6日 周四",title:"言语理解专项",tasks:[{t:"言语理解-逻辑填空",tm:"40min"},{t:"言语理解-阅读理解",tm:"40min"},{t:"言语理解-语句表达",tm:"20min"},{t:"套题练习1套",tm:"30min"},{t:"休息+家人时间",tm:"90min"},{t:"错题整理",tm:"30min"}],done:false},
+                {day:3,date:"2月7日 周五",title:"数量关系入门",tasks:[{t:"数量关系-工程/行程问题",tm:"40min"},{t:"数量关系-排列组合",tm:"30min"},{t:"蒙题技巧训练",tm:"20min"},{t:"今日套题练习",tm:"30min"},{t:"运动放松",tm:"30min"},{t:"时政常识积累",tm:"15min"}],done:false},
+                {day:4,date:"2月8日 周六",title:"周末模拟考试",tasks:[{t:"全真模拟考试",tm:"150min"},{t:"午休",tm:"60min"},{t:"错题深度分析",tm:"90min"},{t:"家人陪伴时间",tm:"180min"}],done:false},
+                {day:5,date:"2月9日 周日",title:"休息日",tasks:[{t:"完全休息",tm:"全天"},{t:"陪伴家人",tm:"全天"},{t:"适当运动/娱乐",tm:"自定"}],done:false},
+                {day:6,date:"2月10日 周一",title:"查漏补缺",tasks:[{t:"薄弱模块专项提升",tm:"60min"},{t:"资料分析提速训练",tm:"30min"},{t:"判断推理强化",tm:"40min"},{t:"套题练习1套",tm:"35min"},{t:"休息放松",tm:"60min"},{t:"错题复盘",tm:"25min"}],done:false},
+                {day:7,date:"2月11日 周二",title:"言语+数量巩固",tasks:[{t:"言语理解高频考点",tm:"40min"},{t:"数量关系重点题型",tm:"35min"},{t:"常识判断时政",tm:"20min"},{t:"套题练习1套",tm:"35min"},{t:"家人晚餐时间",tm:"60min"},{t:"当日总结",tm:"20min"}],done:false},
+                {day:8,date:"2月12日 周三",title:"综合训练",tasks:[{t:"全真模拟",tm:"120min"},{t:"错题分析",tm:"60min"},{t:"休息调整",tm:"60min"},{t:"下周计划调整",tm:"20min"}],done:false}
+            ],
+            modules: [
+                {n:"资料分析",t:"85%",p:0,c:"blue"},
+                {n:"判断推理",t:"75%",p:0,c:"green"},
+                {n:"言语理解",t:"75%",p:0,c:"yellow"},
+                {n:"数量关系",t:"40%",p:0,c:"purple"},
+                {n:"常识判断",t:"50%",p:0,c:"red"}
+            ]
+        };
+        
+        let state = {curDay:0,timerInt:null,timerSec:1500,timerRun:false,timerMode:25};
+        
+        // ========== Init ==========
+        function init(){
+            load();
+            loadAlarms();
+            renderDate();
+            renderToday();
+            renderAllDays();
+            renderModules();
+            renderStats();
+            updateProgress();
+            updateTimer();
+            requestNotify();
+            setInterval(checkAlarms, 30000);
+            if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+        }
+        
+        function load(){
+            const s=localStorage.getItem('studyPlan');
+            if(s){
+                const d=JSON.parse(s);
+                d.days.forEach((dy,i)=>{
+                    if(plan.days[i]){
+                        plan.days[i].done=dy.done;
+                        dy.tasks.forEach((t,j)=>{if(plan.days[i].tasks[j])plan.days[i].tasks[j].done=t.done});
+                    }
+                });
+            }
+            const td=new Date(),ts=`${td.getMonth()+1}月${td.getDate()}日`;
+            plan.days.forEach((dy,i)=>{if(dy.date.includes(ts))state.curDay=i});
+        }
+        
+        function save(){localStorage.setItem('studyPlan',JSON.stringify(plan));}
+        
+        function renderDate(){
+            const now=new Date();
+            document.getElementById('date-display').textContent=now.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
+        }
+        
+        function renderToday(){
+            const d=plan.days[state.curDay];
+            document.getElementById('day-title').textContent=`第${d.day}天`;
+            document.getElementById('day-date').textContent=d.date;
+            document.getElementById('day-badge').className='card-badge'+(state.curDay<4?' today':'');
+            const ct=document.getElementById('today-tasks');
+            ct.innerHTML='';
+            d.tasks.forEach((t,i)=>{
+                ct.innerHTML+=`<div class="task ${t.done?'completed':''}" onclick="toggleTask(${state.curDay},${i})"><div class="task-chk ${t.done?'checked':''}">${t.done?'✓':''}</div><span class="task-text">${t.t}</span><span class="task-time">${t.tm}</span></div>`;
+            });
+            const btn=document.getElementById('day-check');
+            btn.className='check-btn'+(d.done?' checked':'');
+            document.getElementById('day-check-icon').textContent=d.done?'✓':'';
+        }
+        
+        function renderAllDays(){
+            const cd=document.getElementById('all-days');
+            cd.innerHTML='';
+            plan.days.forEach((d,di)=>{
+                cd.innerHTML+=`<div class="card"><div class="card-header"><div><span class="card-badge ${di===state.curDay?'today':''}">第${d.day}天</span><div class="card-title">${d.title}</div><div class="card-date">${d.date}</div></div><button class="check-btn ${d.done?'checked':''}" onclick="toggleDay(${di})"><span>${d.done?'✓':''}</span></button></div><div class="tasks">${d.tasks.map((t,ti)=>`<div class="task ${t.done?'completed':''}" onclick="toggleTask(${di},${ti})"><div class="task-chk ${t.done?'checked':''}">${t.done?'✓':''}</div><span class="task-text">${t.t}</span><span class="task-time">${t.tm}</span></div>`).join('')}</div></div>`;
+            });
+        }
+        
+        function renderModules(){
+            const cm=document.getElementById('modules');
+            cm.innerHTML='';
+            plan.modules.forEach(m=>{
+                cm.innerHTML+=`<div class="module"><div class="module-header"><span class="module-name">${m.n}</span><span class="module-target">目标${m.t}</span></div><div class="module-bar"><div class="module-fill fill-${m.c}" style="width:${m.p}%"></div></div></div>`;
+            });
+        }
+        
+        function renderStats(){
+            const wc=document.getElementById('week-chart');
+            const mx=300;
+            wc.innerHTML=`<div style="display:flex;align-items:flex-end;gap:6px;height:45px;">${[120,180,200,0,0,240,150].map((m,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;"><div style="width:100%;background:${m>0?'var(--primary)':'#e2e8f0'};border-radius:3px 3px 0 0;height:${(m/mx)*40}px;"></div><span style="font-size:9px;color:var(--text-light);margin-top:3px;">周${['一','二','三','四','五','六','日'][i]}</span></div>`).join('')}</div>`;
+        }
+        
+        function updateProgress(){
+            let tot=0,done=0;
+            plan.days.forEach(d=>{tot+=d.tasks.length;d.tasks.forEach(t=>{if(t.done)done++})});
+            const pct=tot?Math.round(done/tot*100):0;
+            document.getElementById('progress-pct').textContent=pct+'%';
+            document.getElementById('progress-fill').style.width=pct+'%';
+            document.getElementById('days-done').textContent=plan.days.filter(d=>d.done).length;
+            document.getElementById('tasks-done').textContent=done;
+            document.getElementById('hours-done').textContent=Math.floor(done*0.5);
+        }
+        
+        function toggleTask(di,ti){
+            plan.days[di].tasks[ti].done=!plan.days[di].tasks[ti].done;
+            save();renderToday();renderAllDays();updateProgress();
+        }
+        
+        function toggleDay(di){
+            const i=di!==undefined?di:state.curDay;
+            plan.days[i].done=!plan.days[i].done;
+            save();renderToday();renderAllDays();updateProgress();
+        }
+        
+        function switchTab(idx,btn){
+            document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+            document.getElementById('view-'+['home','plan','timer','stats'][idx]).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+            if(btn)btn.classList.add('active');
+        }
+        
+        function updateTimer(){
+            const m=Math.floor(state.timerSec/60),s=state.timerSec%60;
+            document.getElementById('timer-display').textContent=m.toString().padStart(2,'0')+':'+s.toString().padStart(2,'0');
+            document.title=state.timerRun?'⏱️ '+m+':'+s.toString().padStart(2,'0'):'📚 考公计划';
+        }
+        
+        function setMode(min,btn){
+            resetTimer();
+            state.timerMode=min;
+            state.timerSec=min*60;
+            document.querySelectorAll('.timer-mode').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            updateTimer();
+        }
+        
+        function toggleTimer(){
+            const btn=document.getElementById('timer-btn');
+            if(state.timerRun){
+                clearInterval(state.timerInt);
+                state.timerRun=false;
+                btn.textContent='继续';
+                btn.className='timer-btn start';
+            }else{
+                state.timerInt=setInterval(()=>{
+                    if(state.timerSec>0){state.timerSec--;updateTimer();}
+                    else{
+                        clearInterval(state.timerInt);
+                        state.timerRun=false;
+                        btn.textContent='时间到！';
+                        btn.className='timer-btn start';
+                        showNoti('⏰ 时间到！休息一下～');
+                        playSound(currentSound);
+                    }
+                },1000);
+                state.timerRun=true;
+                btn.textContent='暂停';
+                btn.className='timer-btn pause';
+            }
+        }
+        
+        function resetTimer(){
+            clearInterval(state.timerInt);
+            state.timerRun=false;
+            state.timerSec=state.timerMode*60;
+            const btn=document.getElementById('timer-btn');
+            btn.textContent=state.timerMode===5?'开始休息':'开始学习';
+            btn.className='timer-btn start';
+            updateTimer();
+        }
+        
+        function showNoti(msg){
+            const el=document.getElementById('noti');
+            document.getElementById('noti-text').textContent=msg;
+            el.classList.add('show');
+            setTimeout(()=>el.classList.remove('show'),5000);
+            
+            // Browser notification
+            if (Notification.permission === 'granted') {
+                new Notification('学习提醒', { body: msg, icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📚</text></svg>' });
+            }
+        }
+        
+        function hideNoti(){document.getElementById('noti').classList.remove('show');}
+        
+        function showToast(msg){
+            const el=document.getElementById('toast');
+            el.textContent=msg;
+            el.classList.add('show');
+            setTimeout(()=>el.classList.remove('show'),2000);
+        }
+        
+        function requestNotify(){
+            if('Notification'in window&&Notification.permission!=='granted'){
+                Notification.requestPermission().then(p=>{
+                    if(p==='granted')showToast('通知已开启');
+                });
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>
