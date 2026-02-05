@@ -1,0 +1,14 @@
+{
+  "name": "study-plan",
+  "version": "1.0.0",
+  "description": "考公学习计划 - 行测70分冲刺",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "vercel": "npx vercel --prod"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}
